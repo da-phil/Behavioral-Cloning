@@ -61,21 +61,31 @@ def process_image(img):
 
 def generator(samples, batch_size=32):
     num_samples = len(samples)
+    correction = 0.2
     while 1: # Loop forever so the generator never terminates
         sklearn.utils.shuffle(samples)
-        for offset in range(0, num_samples, batch_size):
-            batch_samples = samples[offset:offset+batch_size]
+        for offset in range(0, num_samples, batch_size//3):
+            batch_samples = samples[offset:offset+batch_size//3]
             images = []
             angles = []
             for batch_sample in batch_samples:
-                filename = batch_sample[0].split("/")[-1]
-                current_path = training_set + "/IMG/" + filename
-                center_image = np.asarray(Image.open(current_path))
-                center_angle = float(batch_sample[3])
-                images.append(center_image)
-                angles.append(center_angle)
+                current_path_center = training_set + "/IMG/" + batch_sample[0].split("/")[-1]
+                current_path_left   = training_set + "/IMG/" + batch_sample[1].split("/")[-1]
+                current_path_right  = training_set + "/IMG/" + batch_sample[2].split("/")[-1]
 
-            # trim image to only see section with road
+                center_angle = float(batch_sample[3])
+                # create adjusted steering measurements for the side camera images
+                left_angle  = center_angle + correction
+                right_angle = center_angle - correction
+
+                # read in images from center, left and right cameras
+                img_center = process_image(np.asarray(Image.open(current_path_center)))
+                img_left   = process_image(np.asarray(Image.open(current_path_left)))
+                img_right  = process_image(np.asarray(Image.open(current_path_right)))
+                
+                images.extend([img_left, img_center, img_right])
+                angles.extend([left_angle, center_angle, right_angle])
+
             X_train = np.array(images)
             y_train = np.array(angles)
             yield sklearn.utils.shuffle(X_train, y_train)
@@ -143,10 +153,8 @@ if __name__ == "__main__":
             for i in range(3):
                 filename = line[i].split("/")[-1]
                 current_path = training_set + "/IMG/" + filename
-
                 # read in images from center, left and right cameras
                 img = process_image(np.asarray(Image.open(current_path)))
-
                 if i == 0:
                     training_data["center_imgs"].append(img)
                 if i == 1:
@@ -155,18 +163,13 @@ if __name__ == "__main__":
                     training_data["right_imgs"].append(img)
             """
             # car control signals
-            for i in range(3,7):
-                if i == 3:
-                    # create adjusted steering measurements for the side camera images
-                    training_data["steering_angle_center"].append(float(line[i]))
-                    training_data["steering_angle_left"].append(float(line[i]) + args.steering_corr)
-                    training_data["steering_angle_right"].append(float(line[i]) - args.steering_corr)
-                if i == 4:
-                    training_data["throttle"].append(line[i])
-                if i == 5:
-                    training_data["brake"].append(line[i])
-                if i == 6:
-                    training_data["speed"].append(line[i])
+            # create adjusted steering measurements for the side camera images
+            training_data["steering_angle_center"].append(float(line[3]))
+            training_data["steering_angle_left"].append(float(line[3]) + args.steering_corr)
+            training_data["steering_angle_right"].append(float(line[3]) - args.steering_corr)
+            training_data["throttle"].append(line[4])
+            training_data["brake"].append(line[5])
+            training_data["speed"].append(line[6])
 
 
 

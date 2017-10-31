@@ -3,9 +3,9 @@
 import argparse
 import base64
 from datetime import datetime
-import os
+import os, sys
 import shutil
-
+import signal
 import numpy as np
 import socketio
 import eventlet
@@ -96,6 +96,9 @@ def send_control(steering_angle, throttle):
         skip_sid=True)
 
 
+def signal_handler(signal, frame):
+        sys.exit(0)
+        
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
     parser.add_argument(
@@ -111,6 +114,9 @@ if __name__ == '__main__':
         help='Path to image folder. This is where the images from the run will be saved.'
     )
     args = parser.parse_args()
+
+
+    signal.signal(signal.SIGINT, signal_handler)
 
     # check that model Keras version is same as local Keras version
     f = h5py.File(args.model, mode='r')

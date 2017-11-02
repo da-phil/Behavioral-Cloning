@@ -4,13 +4,12 @@ import os, sys, signal
 import time
 import csv
 import numpy as np
-import tensorflow as tf
-import pandas as pd
 from PIL import Image
 import argparse
-import keras
-import itertools
 import matplotlib.pyplot as plt
+
+import tensorflow as tf
+import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Flatten
@@ -42,15 +41,7 @@ def nvidia_model(keep_prob=0.5):
     model = Sequential()
     model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
     model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(3,160,320)))
-    model.add(Conv2D(16, kernel_size=(3, 3), strides=(4,4), input_shape=(3,90,320), activation="elu"))
-    model.add(Conv2D(32, kernel_size=(3, 3), strides=(2,2), activation="elu"))
-    model.add((Dropout(keep_prob)))
-    model.add(Conv2D(64, kernel_size=(3, 3), strides=(2,2), activation="elu"))
-    model.add(Flatten())
-    model.add(Dense(512, activation="elu"))
-    model.add(Dropout(keep_prob))
-    model.add(Dense(1))
-    model.compile(loss="mse", optimizer="adam")
+    # TBD
     return model
 
 
@@ -172,7 +163,6 @@ if __name__ == "__main__":
             training_data["speed"].append(line[6])
 
 
-
     try:
         model = load_model(model_file)
         print("Loaded pretrained %s keras model!" % args.model)
@@ -196,49 +186,35 @@ if __name__ == "__main__":
         EarlyStopping(monitor="loss", patience=3, verbose=1),
         ModelCheckpoint(weights_file, monitor="loss", save_best_only=True, mode="auto", save_weights_only=True, verbose=1)
     ]
-
-    ### plot the training and validation loss for each epoch
-    fig = plt.figure()
-    plt.title("run%02d visualization" % args.trainingset)
-    ax1 = plt.subplot(2,1,1)
-    ax1.plot(training_data["steering_angle_center"])
-    ax1.plot(training_data["throttle"])
-    ax1.plot(training_data["brake"])
-    ax1.legend(["steering", "throttle", "brake"])
-    plt.grid()
-    ax2 = plt.subplot(2,1,2, sharex=ax1)
-    ax2.plot(training_data["speed"])
-    ax2.legend(["speed"])
-    plt.grid(), plt.show()
-    
-    
+   
     train_samples, validation_samples = train_test_split(samples, test_size=0.2)
     nr_train_samples = len(train_samples)
     nr_valid_samples = len(validation_samples)
     print("Samples in training set:   %d" % nr_train_samples)
     print("Samples in validation set: %d" % nr_valid_samples)
     
-    biased_index = []
-    #biased_index.append(class_indexes_train[30][0])
-    #biased_index.append(class_indexes_train[27][0])
-    #biased_index = np.array(list(itertools.chain.from_iterable(biased_index)))
+    # check if batchsize is not too large for sample size (validation set might be too small)
+    changed_batchsize = False
+    while nr_valid_samples // args.batchsize == 0:
+        args.batchsize = args.batchsize // 2
+        changed_batchsize = True
 
-    sample_selection        = range(nr_train_samples) #balanced_index #biased_index
-    #images_train            = np.array(training_data["center_imgs"])[sample_selection]
-    #steering_angles_train   = np.array(training_data["steering_angle_center"])[sample_selection]
+    if changed_batchsize:
+        print("Batchsize too high for dataset, changed batchsize to %d" % args.batchsize)
+
+    sample_selection = range(nr_train_samples)
     
     # compile and train the model using the generator function
     train_generator = generator(train_samples, batch_size=args.batchsize)
     validation_generator = generator(validation_samples, batch_size=args.batchsize)
     
     model.summary()
-    #model_history = model.fit(images_train, steering_angles_train, validation_split=0.2, shuffle=True,
-    #                            batch_size=args.batchsize, epochs=args.epochs, verbose=1, callbacks=callbacks_list)
     model_history = model.fit_generator(train_generator, steps_per_epoch=nr_train_samples // args.batchsize, epochs=args.epochs,
                                          validation_data=validation_generator, validation_steps=nr_valid_samples // args.batchsize,
                                          callbacks=callbacks_list, verbose=1)
 
     ### plot the training and validation loss for each epoch
+    fig = plt.figure()
     plt.plot(model_history.history['loss'])
     plt.plot(model_history.history['val_loss'])
     plt.title('model mean squared error loss')

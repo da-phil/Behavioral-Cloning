@@ -18,17 +18,24 @@ from keras.models import load_model
 import h5py
 from keras import __version__ as keras_version
 
+from training import preprocess_image
+
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
 prev_image_array = None
 
 
+    
 class SimplePIController:
+
     def __init__(self, Kp, Ki):
         self.Kp = Kp
         self.Ki = Ki
         self.set_point = 0.
+        self.reset()
+
+    def reset(self):
         self.error = 0.
         self.integral = 0.
 
@@ -45,8 +52,8 @@ class SimplePIController:
         return self.Kp * self.error + self.Ki * self.integral
 
 
-controller = SimplePIController(0.1, 0.002)
-set_speed = 9
+controller = SimplePIController(0.05, 0.003)
+set_speed = 10
 controller.set_desired(set_speed)
 
 
@@ -62,7 +69,7 @@ def telemetry(sid, data):
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
-        image_array = np.asarray(image)
+        image_array = preprocess_image(np.asarray(image))
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))
@@ -83,6 +90,7 @@ def telemetry(sid, data):
 @sio.on('connect')
 def connect(sid, environ):
     print("connect ", sid)
+    controller.reset()
     send_control(0, 0)
 
 
@@ -97,7 +105,7 @@ def send_control(steering_angle, throttle):
 
 
 def signal_handler(signal, frame):
-        sys.exit(0)
+    sys.exit(-1)
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
@@ -114,7 +122,6 @@ if __name__ == '__main__':
         help='Path to image folder. This is where the images from the run will be saved.'
     )
     args = parser.parse_args()
-
 
     signal.signal(signal.SIGINT, signal_handler)
 

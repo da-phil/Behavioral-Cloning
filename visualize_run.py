@@ -13,20 +13,10 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Remote Driving")
-    parser.add_argument(
-        "trainingset",
-        type=int,
-        nargs="?",
-        default=0,
-        help="Choose trainingset"
-    )
-    parser.add_argument(
-        "--steering_corr",
-        type=float,
-        nargs="?",
-        default="0.2",
-        help="Steering correction related to left and right camera image evaluation in training"
-    )
+    parser.add_argument("trainingset",     type=int,    nargs="?",
+                        default=0,         help="Choose trainingset")
+    parser.add_argument("--steering_corr", type=float,  nargs="?",
+                        default="0.2",     help="Steering correction")
     args = parser.parse_args()
     
     # Parse csv file

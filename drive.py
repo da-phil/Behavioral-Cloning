@@ -18,7 +18,7 @@ from keras.models import load_model
 import h5py
 from keras import __version__ as keras_version
 
-from training import preprocess_image
+from model import preprocess_image
 
 sio = socketio.Server()
 app = Flask(__name__)

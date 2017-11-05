@@ -12,7 +12,7 @@ from PIL import Image
 import keras
 from keras.models import Sequential, load_model
 
-from training import preprocess_image
+from model import preprocess_image
 
 
 #

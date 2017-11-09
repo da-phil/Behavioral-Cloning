@@ -224,7 +224,11 @@ if __name__ == "__main__":
     validation_generator = generator(validation_samples, batch_size=args.batchsize,
                                 steering_correction=args.steering_corr, is_training=False)
 
-    model.compile(loss="mse", optimizer="adam")    
+    #optimizer_choice = keras.optimizers.Adadelta(lr=0.5, decay=0.2)
+    optimizer_choice = keras.optimizers.Adam(lr=0.001, decay=0.0001)
+    # optimizer_choice = keras.optimizers.Adamax(lr=0.002,decay=0.1)
+
+    model.compile(loss="mse", optimizer=optimizer_choice)    
     model.summary()
     model_history = model.fit_generator(train_generator, steps_per_epoch=nr_train_samples // args.batchsize, epochs=args.epochs,
                                          validation_data=validation_generator, validation_steps=nr_valid_samples // args.batchsize,

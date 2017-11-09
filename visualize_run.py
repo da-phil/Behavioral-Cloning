@@ -8,7 +8,7 @@ import pandas as pd
 import argparse
 import itertools
 import matplotlib.pyplot as plt
-
+import scipy.signal
 
 
 if __name__ == "__main__":
@@ -18,6 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--steering_corr", type=float,  nargs="?",
                         default="0.2",     help="Steering correction")
     args = parser.parse_args()
+    fig = plt.figure()
     
     # Parse csv file
     training_set  = "../run%02d" % args.trainingset
@@ -38,18 +39,24 @@ if __name__ == "__main__":
             training_data["brake"].append(line[5])
             training_data["speed"].append(line[6])
             
+    steering_filtered = scipy.signal.savgol_filter(training_data["steering_angle_center"], 9, 6,
+                                                    deriv=0, delta=1.0, axis=-1, mode='interp', cval=0.0)
+
+    nr_samples = len(training_data["speed"])
+    print("Samples in dataset:   %d" % nr_samples)
 
     ### plot the training and validation loss for each epoch
-    fig = plt.figure()
     plt.title("run%02d visualization" % args.trainingset)
     ax1 = plt.subplot(2,1,1)
-    ax1.plot(training_data["steering_angle_center"])
+    ax1.plot(training_data["steering_angle_center"], 'r')
+    ax1.plot(steering_filtered, 'r--')
     ax1.plot(training_data["throttle"])
     ax1.plot(training_data["brake"])
-    ax1.legend(["steering", "throttle", "brake"])
+    ax1.legend(["steering", "steering_filtered", "throttle", "brake"])
     plt.grid()
     ax2 = plt.subplot(2,1,2, sharex=ax1)
     ax2.plot(training_data["speed"])
     ax2.legend(["speed"])
-    plt.grid(), plt.show()
+    plt.grid()
+    plt.show()
     

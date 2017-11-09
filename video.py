@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from moviepy.editor import ImageSequenceClip
 import argparse
 

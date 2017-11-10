@@ -120,6 +120,4 @@ Driving track 1 autonomously with the nvidia model was already possible after tr
 
 I could even increase the speed in `drive.py` to 15 mph and the car would still drive safely on both tracks.
 
-![track1_gif]
-
-![track2_gif]
+![track1_gif]    ![track2_gif]

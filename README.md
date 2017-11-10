@@ -27,7 +27,7 @@ The goals / steps of this project are the following:
 * Use the model to drive the vehicle autonomously around the first track in the simulator. The vehicle should remain on the road for an entire loop around the track.
 * Summarize the results with a written report
 
-The writeup can be found here: [writeup.md]
+The writeup can be found here: [writeup.md](writeup.md)
 
 ### Dependencies
 This lab requires:

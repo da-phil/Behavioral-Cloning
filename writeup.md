@@ -76,7 +76,7 @@ Additionally I used dropout layers to prevent overfitting in both networks.
 
 #### Model parameter tuning
 
-I used an adam optimizer, with the learning rate set to `0.001` and also setting a learning rate decay of `0.0001` to make sure that I get a smoothly decreasing loss across training for 10 episodes. In the beginning I worked with only 5 episodes and a fixed default learning rate, but sometimes I could already see an oscilating loss value after 3 or 4 epochs.
+I used an adam optimizer, with the learning rate set to `0.001` and also setting a learning rate decay of `0.0001` to make sure that I get a smoothly decreasing loss across training for 10 epochs. In the beginning I worked with only 5 epochs and a fixed default learning rate, but sometimes I could already see an oscilating loss value after 3 or 4 epochs.
 In order to stop training after 3 epochs where the loss hasn't decreased I also added a `EarlyStopping` callback with a patience of `3` to the `fit_generator` model call in keras.
 
 

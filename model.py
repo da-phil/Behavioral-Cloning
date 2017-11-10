@@ -48,9 +48,9 @@ def nvidia_model(keep_prob=0.5):
     model.add(Conv2D(64, kernel_size=(3, 3), strides=(1,1), activation="elu"))
     model.add((Dropout(keep_prob)))
     model.add(Flatten())
-    model.add(Dense(1164, activation="elu"))
     model.add(Dropout(keep_prob))
     model.add(Dense(100, activation="elu"))
+    model.add(Dense(50, activation="elu"))
     model.add(Dense(10, activation="elu"))
     model.add(Dense(1))
     return model

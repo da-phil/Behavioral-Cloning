@@ -13,6 +13,8 @@ The goals / steps of this project are the following:
 [example_image]: ./examples/placeholder_small.png "Normal Image"
 [steering_signal]: ./examples/steering_signal_input.png "Steering signal input device comparison"
 [using_multiple_cameras]: ./examples/carnd-using-multiple-cameras.png "Using all three cameras for steering prediction"
+[track1_gif]: ./examples/track1.gif
+[track1_gif]: ./examples/track2.gif
 
 ### Files explained
 
@@ -36,9 +38,9 @@ I tried out two models, the one which was published by comma.ai in their [paper 
 The second model I tried out was the one proposed in NVIDIAS [paper "End to End Learning for Self-Driving Cars" (2016)](http://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf).
 
 Both models include ELU layers to introduce nonlinearity and the data is normalized in the models using a Keras lambda layer. 
-Additionally I used dropout layer to prevent overfitting in both networks.
+Additionally I used dropout layers to prevent overfitting in both networks.
 
-**Comma.AI Model**
+**comma.AI model**
 
 | Layer         		     |     Description                         | 
 |:---------------------:|:---------------------------------------------:| 
@@ -53,8 +55,11 @@ Additionally I used dropout layer to prevent overfitting in both networks.
 | Dropout               | keep_prob: 0.2                                |
 | Fully connected out   | input: 512, output: 1                        | 
 
+**nvidia model**
+tbd
 
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 10-16). The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
+The models were trained and validated on different data sets to ensure that the model was not overfitting.
+model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
 
 #### Model parameter tuning
 
@@ -64,11 +69,11 @@ In order to stop training after 3 episodes where the loss hasn't decreased I als
 
 #### Training data
 
-During training in the simulator I didn't so much attention to staying in the middle of the road, I just try to not get too close to the border of the street. After starting out with my keyboard as input device I noticed that I needed far more training data than with a mouse as input device. As can be seen in the following plot, where I drove the first couple of turns on track 2 with the keyboard first and then with the mouse, the mouse input loooks way smoother and more reasonable for training.
+During training in the simulator I didn't put so much attention to staying in the middle of the road, I just try to not get too close to the border of the street. After starting out with my keyboard as input device I noticed that I needed far more training data than with a mouse as input device. As can be seen in the following plot, where I drove the first couple of turns on track 2 with the keyboard first and then with the mouse, the mouse input loooks way smoother and more reasonable for training.
 
 ![steering_signal]
 
-I assume that - because the signal is not so peaky and more stable across frames - learning the end-to-end relation between pixels in the current frame to the steering angle is more robust, meaning that the predictions get less jumpy.
+I assume that - because the signal is not so peaky and more stable across frames - learning the end-to-end relation between pixels in the current frame to the steering angle is more robust, meaning that also the predictions get less jumpy.
 
 In order to stay in the lane I used the technique proposed in the NVIDIA paper to use all three camera images as shown in this image:
 
@@ -76,34 +81,24 @@ In order to stay in the lane I used the technique proposed in the NVIDIA paper t
 
 Using a correction angle of `0.25` worked well for the recorded training sets.
 
-I tried recovering from the left and right sides of the road only a couple of times but figured that I'd need so many maneuvers for training that it's not worth it, using all three camera images already did the trick here.
+I tried recovering from the left and right sides of the road only a couple of times for track 2, where the car would start steering aggressively to the left once started. Training with only 3 or 4 recovering maneuvers already helped of getting rid of this problem.
+
+For mitigating a steering angle bias, as can be seen on track 1 where the car is mostly driving to the left I sometimes drove the tracks in the opposite direction.
+Also randomly augmenting the data set by flipping images and angles helped with this issue.
+
+I finally randomly shuffled the data set and put 20% of the data into a validation set. 
+
+I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by
 
 
 In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. 
 
 Both models worked quite well, however the commaAI model seemed to need more training data to be as robust as the nvidia model, this might be due to the fact that it has approx. 1.1 million parameters whereas the nvidia model only has 250 thousand trainable parameters. This implied that the commaAI model was slightly overfitting. 
 
+At the end of the process, the vehicle is able to drive autonomously around both tracks without leaving the road.
+Driving track 1 autonomously with the nvidia model was already possible after training only with the Udacity supplied dataset, driving track 2 autonomously needed a lot of additional training data, approx. 34k (track1: 11k, track2: 32k) samples.
 
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
 
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
+![track1_gif]
 
-#### Final Model Architecture
-
-nvidia
-
-####3. Creation of the Training Set & Training Process
-
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
-
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
-
-Then I repeated this process on track two in order to get more data points.
-
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
-
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
-
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+![track2_gif]

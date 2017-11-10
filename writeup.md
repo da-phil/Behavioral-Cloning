@@ -24,7 +24,7 @@ The project includes the following files:
 * `*model.h5` files containing trained convolution neural networks 
 * `writeup_report.md` summarizing the results
 
-Using the Udacity provided simulator, the provided model *nvidia* and my `drive.py` file, the car can be driven autonomously around the track by executing 
+Using the Udacity provided simulator, the model *nvidia* and the `drive.py` file, the car can be driven autonomously around the tracks by executing 
 ```sh
 ./drive.py nvidia-model.h5
 ```
@@ -51,7 +51,7 @@ Additionally I used dropout layers to prevent overfitting in both networks.
 | Dropout               | keep_prob: 0.2                                |
 | Convolution           | kernel: 3x3, stride: 2x2, output: 3x11x64, activation: ELU     |
 | Flatten               | output: 2112                                  |
-| Fully connected       | input: 2048, output: 512, activation: ELU     |
+| Fully connected       | input: 2112, output: 512, activation: ELU     |
 | Dropout               | keep_prob: 0.2                                |
 | Fully connected out   | input: 512, output: 1                        | 
 
@@ -74,18 +74,18 @@ Additionally I used dropout layers to prevent overfitting in both networks.
 | Fully connected out   | input: 10, output: 1                        | 
 
 
-The models were trained and validated on different data sets to ensure that the model was not overfitting.
-model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
-
 #### Model parameter tuning
 
-I used an adam optimizer, with the learning rate set to `0.001` and also setting a learning rate decay of `0.0001` to make sure that I get a smoothly decreasing loss across training for 10 episodes. In the beginning I worked with only 5 episodes and a fixed default learning rate, but sometimes I could already see an oscilating loss value after 3 or 4 episodes.
-In order to stop training after 3 episodes where the loss hasn't decreased I also added a `EarlyStopping` callback with a patience of `3` to the `fit_generator` model call in keras.
+I used an adam optimizer, with the learning rate set to `0.001` and also setting a learning rate decay of `0.0001` to make sure that I get a smoothly decreasing loss across training for 10 episodes. In the beginning I worked with only 5 episodes and a fixed default learning rate, but sometimes I could already see an oscilating loss value after 3 or 4 epochs.
+In order to stop training after 3 epochs where the loss hasn't decreased I also added a `EarlyStopping` callback with a patience of `3` to the `fit_generator` model call in keras.
 
 
-#### Training data
+#### Training data generation
 
-During training in the simulator I didn't put so much attention to staying in the middle of the road, I just try to not get too close to the border of the street. After starting out with my keyboard as input device I noticed that I needed far more training data than with a mouse as input device. As can be seen in the following plot, where I drove the first couple of turns on track 2 with the keyboard first and then with the mouse, the mouse input loooks way smoother and more reasonable for training.
+The models were trained and validated on different data sets recorded on track1 and track2 to ensure that the models did generalize well and not suffer from overfitting.
+After training they were tested by running them through the simulator and ensuring that the vehicle could stay on the track.
+
+During training in the simulator I didn't put so much attention to staying in the middle of the road, I just tried to not get too close to the border of the street. After starting out with my keyboard as input device I noticed that I needed far more training data than with a mouse as input device. As can be seen in the following plot, where I drove the first couple of turns on track 2 with the keyboard first and then with the mouse, the mouse input looks way smoother and more reasonable for training.
 
 ![steering_signal]
 
@@ -102,18 +102,23 @@ I tried recovering from the left and right sides of the road only a couple of ti
 For mitigating a steering angle bias, as can be seen on track 1 where the car is mostly driving to the left I sometimes drove the tracks in the opposite direction.
 Also randomly augmenting the data set by flipping images and angles helped with this issue.
 
-I finally randomly shuffled the data set and put 20% of the data into a validation set. 
+I finally randomly shuffled my image and steering angle data and put 20% of the data into a validation set. 
+The validation set helped determine if the model was over or under fitting. I plotted the training history in order to visualize whether I was under- or overfitting the models.
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by
+#### Training data fine-tuning
 
+Approx. 34k (track1: 11k, track2: 23k) samples were used for training. After training the models with all training samples I evaluated whether the car would successfully drive both tracks. If neither track was successfull I started training over again, but with the training datasets in a different order. If I was able to get successful driving only on one track I carefully trained the model on training data of the failed track, but only for 3 epochs. This seemed to work quite well, without getting even more data.
 
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. 
+### Result 
 
-Both models worked quite well, however the commaAI model seemed to need more training data to be as robust as the nvidia model, this might be due to the fact that it has approx. 1.1 million parameters whereas the nvidia model only has 250 thousand trainable parameters. This implied that the commaAI model was slightly overfitting. 
+Both models worked quite well, however the commaAI model seemed to need more training data to be as robust as the nvidia model, this might be due to the fact that it has approx. 1.1 million parameters whereas the nvidia model only has 250 thousand trainable parameters. This implied that the commaAI model was slightly overfitting and not generalizing as well as the nvidia model.
 
-At the end of the process, the vehicle is able to drive autonomously around both tracks without leaving the road.
-Driving track 1 autonomously with the nvidia model was already possible after training only with the Udacity supplied dataset, driving track 2 autonomously needed a lot of additional training data, approx. 34k (track1: 11k, track2: 32k) samples.
+Because I wanted to finish this project after some time I didn't further consider the commaAI model and stuck to the nvidia model for fine-tuning.
 
+At the end of the process, the vehicle was able to drive autonomously around both tracks without leaving the road.
+Driving track 1 autonomously with the nvidia model was already possible after training only with the Udacity supplied dataset, driving track 2 autonomously needed a lot of additional training data. 
+
+I could even increase the speed in `drive.py` to 15 mph and the car would still drive safely on both tracks.
 
 ![track1_gif]
 

@@ -55,9 +55,10 @@ def nvidia_model(keep_prob=0.5):
     model.add(Dense(1))
     return model
 
+
 def random_flip(image, steering_angle):
     """
-    Randomly flipt the image left <-> right, and adjust the steering angle.
+    Randomly flip the image left <-> right, and adjust the steering angle.
     """
     if np.random.rand() < 0.5:
         image = cv2.flip(image, 1)

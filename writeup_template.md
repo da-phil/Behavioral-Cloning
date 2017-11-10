@@ -68,36 +68,29 @@ During training in the simulator I didn't so much attention to staying in the mi
 
 ![steering_signal]
 
+I assume that - because the signal is not so peaky and more stable across frames - learning the end-to-end relation between pixels in the current frame to the steering angle is more robust, meaning that the predictions get less jumpy.
+
 In order to stay in the lane I used the technique proposed in the NVIDIA paper to use all three camera images as shown in this image:
 
-[using_multiple_cameras]
+![using_multiple_cameras]
 
+Using a correction angle of `0.25` worked well for the recorded training sets.
 
 I tried recovering from the left and right sides of the road only a couple of times but figured that I'd need so many maneuvers for training that it's not worth it, using all three camera images already did the trick here.
 
-For details about how I created the training data, see the next section. 
 
-###Model Architecture and Training Strategy
+In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. 
 
-####1. Solution Design Approach
-
-The overall strategy for deriving a model architecture was to ...
-
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
-
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting. 
-
-To combat the overfitting, I modified the model so that ...
+Both models worked quite well, however the commaAI model seemed to need more training data to be as robust as the nvidia model, this might be due to the fact that it has approx. 1.1 million parameters whereas the nvidia model only has 250 thousand trainable parameters. This implied that the commaAI model was slightly overfitting. 
 
 
 The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
 
 At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
 
-####2. Final Model Architecture
+#### Final Model Architecture
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
-
+nvidia
 
 ####3. Creation of the Training Set & Training Process
 

@@ -14,7 +14,7 @@ The goals / steps of this project are the following:
 [steering_signal]: ./examples/steering_signal_input.png "Steering signal input device comparison"
 [using_multiple_cameras]: ./examples/carnd-using-multiple-cameras.png "Using all three cameras for steering prediction"
 [track1_gif]: ./examples/track1.gif
-[track1_gif]: ./examples/track2.gif
+[track2_gif]: ./examples/track2.gif
 
 ### Files explained
 

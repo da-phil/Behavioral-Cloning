@@ -24,9 +24,9 @@ The project includes the following files:
 * `*model.h5` files containing trained convolution neural networks 
 * `writeup_report.md` summarizing the results
 
-Using the Udacity provided simulator, the provided model *commaAI* and my `drive.py` file, the car can be driven autonomously around the track by executing 
+Using the Udacity provided simulator, the provided model *nvidia* and my `drive.py` file, the car can be driven autonomously around the track by executing 
 ```sh
-./drive.py commaAI-model.h5
+./drive.py nvidia-model.h5
 ```
 
 ### Model Architecture and Training Strategy
@@ -56,7 +56,23 @@ Additionally I used dropout layers to prevent overfitting in both networks.
 | Fully connected out   | input: 512, output: 1                        | 
 
 **nvidia model**
-tbd
+
+| Layer         		     |     Description                         | 
+|:---------------------:|:---------------------------------------------:| 
+| input                 | input: 66x200x3 RGB image                     |
+| Lambda normalization  | Normalizes RGB values to [-1, +1] value range   |
+| Convolution           | kernel: 5x5, stride: 2x2, output: 24x98x16, activation: ELU    |
+| Convolution           | kernel: 5x5, stride: 2x2, output: 36x14x47, activation: ELU     |
+| Convolution           | kernel: 5x5, stride: 2x2, output: 48x5x22, activation: ELU     |
+| Dropout               | keep_prob: 0.2                                |
+| Convolution           | kernel: 3x3, stride: 1x1, output: 64x3x20, activation: ELU     |
+| Convolution           | kernel: 3x3, stride: 1x1, output: 64x1x18, activation: ELU     |
+| Dropout               | keep_prob: 0.2                                |
+| Flatten               | output: 1164                                  |
+| Fully connected       | input: 1164, output: 100, activation: ELU     |
+| Fully connected out   | input: 100, output: 10                        | 
+| Fully connected out   | input: 10, output: 1                        | 
+
 
 The models were trained and validated on different data sets to ensure that the model was not overfitting.
 model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.

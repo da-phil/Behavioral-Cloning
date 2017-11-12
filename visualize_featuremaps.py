@@ -262,17 +262,16 @@ if __name__ == "__main__":
         print("Saved model '%s' not found! Exit!" % model_file)
         sys.exit(-1)
 
-    samples = []
-    with open(training_set+"/driving_log.csv") as logfile:
-        reader = csv.reader(logfile, delimiter=",")
-        header = next(reader) # it's safe to skip first row in case it contains headings
-        for line in reader:
-            samples.append(line)
 
-    batch_samples = samples[0:3]
+    #reads CSV file into a single dataframe variable
+    training_data_df = pd.read_csv(training_set + "/driving_log.csv",
+                                   names=["center", "left", "right", "steering", "throttle", "brake", "speed"])
+
+    X = training_data_df["center"].values
+    batch_samples = X[0:3]
     images = []
     for batch_sample in batch_samples:
-        current_path_center = training_set + "/IMG/" + batch_sample[0].split("/")[-1]
+        current_path_center = training_set + "/IMG/" + batch_sample.split("/")[-1]
         img_center = preprocess_image(np.asarray(Image.open(current_path_center)))
         images.append(img_center)
 

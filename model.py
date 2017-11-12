@@ -8,6 +8,7 @@ from PIL import Image
 import argparse
 import matplotlib.pyplot as plt
 import cv2
+import pandas as pd
 
 import tensorflow as tf
 import keras
@@ -86,20 +87,24 @@ def augment_data(imgs, steering_angles):
     return imgs, steering_angles
 
 
-def generator(samples, batch_size=32, steering_correction=0.2, is_training=False):
-    num_samples = len(samples)
+def generator(X, y, batch_size=32, steering_correction=0.2, is_training=False):
+    assert(len(X) == len(y))
+    num_samples = len(X)
     while 1: # Loop forever so the generator never terminates
-        sklearn.utils.shuffle(samples)
+        X, y = sklearn.utils.shuffle(X, y)
+
         for offset in range(0, num_samples, batch_size//3):
-            batch_samples = samples[offset:offset+batch_size//3]
+            X_batch = X[offset:offset+batch_size//3]
+            y_batch = y[offset:offset+batch_size//3]
+            
             images = []
             angles = []
-            for batch_sample in batch_samples:
-                current_path_center = training_set + "/IMG/" + batch_sample[0].split("/")[-1]
-                current_path_left   = training_set + "/IMG/" + batch_sample[1].split("/")[-1]
-                current_path_right  = training_set + "/IMG/" + batch_sample[2].split("/")[-1]
+            for X_sample, y_sample in zip(X_batch, y_batch):
+                current_path_center = training_set + "/IMG/" + X_sample[0].split("/")[-1]
+                current_path_left   = training_set + "/IMG/" + X_sample[1].split("/")[-1]
+                current_path_right  = training_set + "/IMG/" + X_sample[2].split("/")[-1]
 
-                center_angle = float(batch_sample[3])
+                center_angle = float(y_sample)
                 # create adjusted steering measurements for the side camera images
                 left_angle  = center_angle + steering_correction
                 right_angle = center_angle - steering_correction
@@ -151,27 +156,16 @@ if __name__ == "__main__":
                     "steering_angle_center": [], "steering_angle_left": [], "steering_angle_right": [],
                     "throttle": [], "brake": [], "speed": []}
     samples = []
-    with open(training_set+"/driving_log.csv") as logfile:
-        reader = csv.reader(logfile, delimiter=",")
-        header = next(reader) # it's safe to skip first row in case it contains headings
-        
-        for line in reader:
-            samples.append(line)
-            # images
-            training_data["center_imgs"].append(training_set + "/IMG/" + line[0].split("/")[-1])
-            training_data["left_imgs"].append(training_set + "/IMG/" + line[1].split("/")[-1])
-            training_data["right_imgs"].append(training_set + "/IMG/" + line[2].split("/")[-1])
+    
+    #reads CSV file into a single dataframe variable
+    training_data_df = pd.read_csv(training_set + "/driving_log.csv",
+                                   names=["center", "left", "right", "steering", "throttle", "brake", "speed"])
 
-            # car control signals
-            # create adjusted steering measurements for the side camera images
-            training_data["steering_angle_center"].append(float(line[3]))
-            training_data["steering_angle_left"].append(float(line[3]) + args.steering_corr)
-            training_data["steering_angle_right"].append(float(line[3]) - args.steering_corr)
-            training_data["throttle"].append(line[4])
-            training_data["brake"].append(line[5])
-            training_data["speed"].append(line[6])
-
-
+    X = training_data_df[["center", "left", "right"]].values
+    y = training_data_df["steering"].values
+    
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=0, shuffle=True)
+    
     weights_file = args.model + "-weights.h5"
     model_file   = args.model + "-model.h5"
     
@@ -200,10 +194,8 @@ if __name__ == "__main__":
         ModelCheckpoint(weights_file, monitor="loss", save_best_only=True, mode="auto", save_weights_only=True, verbose=1)
     ]
 
-    sklearn.utils.shuffle(samples)
-    train_samples, validation_samples = train_test_split(samples, test_size=0.2)
-    nr_train_samples = len(train_samples)
-    nr_valid_samples = len(validation_samples)
+    nr_train_samples = len(X_train)
+    nr_valid_samples = len(X_valid)
     print("Samples in training set:   %d" % nr_train_samples)
     print("Samples in validation set: %d" % nr_valid_samples)
     
@@ -216,12 +208,10 @@ if __name__ == "__main__":
     if changed_batchsize:
         print("Batchsize too high for dataset, changed batchsize to %d" % args.batchsize)
 
-    sample_selection = range(nr_train_samples)
-    
     # compile and train the model using the generator function
-    train_generator = generator(train_samples, batch_size=args.batchsize,
+    train_generator = generator(X_train, y_train, batch_size=args.batchsize,
                                 steering_correction=args.steering_corr, is_training=True)
-    validation_generator = generator(validation_samples, batch_size=args.batchsize,
+    validation_generator = generator(X_valid, y_valid, batch_size=args.batchsize,
                                 steering_correction=args.steering_corr, is_training=False)
 
     #optimizer_choice = keras.optimizers.Adadelta(lr=0.5, decay=0.2)
@@ -230,6 +220,7 @@ if __name__ == "__main__":
 
     model.compile(loss="mse", optimizer=optimizer_choice)    
     model.summary()
+    
     model_history = model.fit_generator(train_generator, steps_per_epoch=nr_train_samples // args.batchsize, epochs=args.epochs,
                                          validation_data=validation_generator, validation_steps=nr_valid_samples // args.batchsize,
                                          callbacks=callbacks_list, verbose=1)
